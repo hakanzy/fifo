@@ -74,20 +74,22 @@ class FifoClient(object):
         else:
             raise TimeoutException()
 
-    def wait_for_group(self, task_ids, timeout=None):
-        deadline = time.time() + timeout
+    def wait_for_group(self, task_ids, timeout=None, interval=1):
         task_ids = set(task_ids)
         results = {}
         for task_id in task_ids:
             results[task_id] = {'status': TIMEOUT, 'body': None}
-        while task_ids and time.time() < deadline:
-            timeout = int(deadline - time.time())
-            if timeout > 0:
-                result = self.redis.brpop(task_ids, timeout)
-                if result:
-                    task_id, task_result = result
-                    results[task_id] = loads(task_result)
-                    task_ids.remove(task_id)
+        total_elapsed = 0
+        while task_ids and total_elapsed <= timeout:
+            block_start = time.time()
+            result = self.redis.brpop(task_ids, interval)
+            block_end = time.time()
+            block_elapsed = block_end - block_start
+            total_elapsed += block_elapsed
+            if result:
+                task_id, task_result = result
+                results[task_id] = loads(task_result)
+                task_ids.remove(task_id)
         return results
 
     def len(self, queue):
