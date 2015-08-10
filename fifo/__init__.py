@@ -48,7 +48,8 @@ class FifoClient(object):
     EXPIRED = EXPIRED
 
     def __init__(self, broker):
-        self.redis = Redis.from_url(broker)
+        # We don't expect that will be taking more than 2 seconds
+        self.redis = Redis.from_url(broker, socket_timeout=2)
 
     def queue_task(self, name, task_args, max_wait, result_timeout=60):
         return self.queue_tasks(name, [task_args], max_wait, result_timeout)[0]
