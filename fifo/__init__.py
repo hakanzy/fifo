@@ -1,6 +1,7 @@
 __author__ = 'Fergal Walsh'
 __version__ = '0.0.3'
 
+import sys
 import time
 import uuid
 import logging
@@ -89,7 +90,7 @@ class FifoClient(object):
             except Exception as e:
                 result = None
                 logger.exception(e, exc_info=True)
-                newrelic.agent.record_exception(*e)
+                newrelic.agent.record_exception(*sys.exc_info())
 
             block_end = time.time()
             block_elapsed = block_end - block_start
