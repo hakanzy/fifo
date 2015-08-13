@@ -8,6 +8,7 @@ import traceback
 import cPickle as pickle
 from importlib import import_module
 from redis import Redis
+import newrelic
 
 
 class ExceptionFormatter(logging.Formatter):
@@ -83,7 +84,13 @@ class FifoClient(object):
         total_elapsed = 0
         while task_ids and total_elapsed <= timeout:
             block_start = time.time()
-            result = self.redis.brpop(task_ids, interval)
+            try:
+                result = self.redis.brpop(task_ids, interval)
+            except Exception as e:
+                result = None
+                logger.exception(e, exc_info=True)
+                newrelic.agent.record_exception(*e)
+
             block_end = time.time()
             block_elapsed = block_end - block_start
             total_elapsed += block_elapsed
